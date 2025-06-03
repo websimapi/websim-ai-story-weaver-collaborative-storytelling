@@ -226,82 +226,6 @@
             margin-top: 0.5rem;
         }
 
-        .comment-input-section {
-            padding: 1rem;
-            border-top: 1px solid #eee;
-        }
-
-        .comment-input {
-            width: 100%;
-            padding: 0.8rem;
-            border: 2px solid #eee;
-            border-radius: 8px;
-            resize: vertical;
-            min-height: 80px;
-            font-family: inherit;
-            transition: border-color 0.3s ease;
-        }
-
-        .comment-input:focus {
-            outline: none;
-            border-color: #667eea;
-        }
-
-        .comment-submit {
-            width: 100%;
-            padding: 0.8rem;
-            background: #667eea;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            margin-top: 0.5rem;
-            cursor: pointer;
-            font-weight: 500;
-            transition: background 0.3s ease;
-        }
-
-        .comment-submit:hover {
-            background: #5a67d8;
-        }
-
-        .action-buttons {
-            padding: 1rem;
-            display: flex;
-            gap: 0.5rem;
-        }
-
-        .finish-button {
-            flex: 1;
-            padding: 1rem;
-            background: #48bb78;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: 600;
-            transition: background 0.3s ease;
-        }
-
-        .finish-button:hover {
-            background: #38a169;
-        }
-
-        .gallery-button {
-            flex: 1;
-            padding: 1rem;
-            background: #ed8936;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: 600;
-            transition: background 0.3s ease;
-        }
-
-        .gallery-button:hover {
-            background: #dd6b20;
-        }
-
         .loading-overlay {
             position: absolute;
             top: 0;
@@ -431,7 +355,6 @@
             const [currentStoryId, setCurrentStoryId] = useState(null);
             const [currentPageIndex, setCurrentPageIndex] = useState(0);
             const [isGenerating, setIsGenerating] = useState(false);
-            // Remove commentText state since input comes from metadata
 
             // Real-time data with proper null checks
             const peers = React.useSyncExternalStore(
@@ -523,22 +446,6 @@
             }, [comments, currentStoryId]);
 
             const handleSubmitComment = async () => {
-                if (!commentText.trim() || !currentUser) return;
-
-                try {
-                    const comment = await room.collection('story_comment').create({
-                        story_id: currentStoryId,
-                        text: commentText,
-                        author: currentUser.username
-                    });
-
-                    setCommentText('');
-                    
-                    // Trigger AI story generation
-                    await generateStoryPage(comment);
-                } catch (error) {
-                    console.error('Error submitting comment:', error);
-                }
             };
 
             const generateStoryPage = async (triggerComment) => {
@@ -772,27 +679,6 @@ Generate the next page of the story.`
                                         </div>
                                     ))}
                                 </div>
-
-                                <div className="comment-input-section">
-                                    <textarea
-                                        className="comment-input"
-                                        placeholder="Add your creative input to guide the story..."
-                                        value={commentText}
-                                        onChange={(e) => setCommentText(e.target.value)}
-                                        onKeyDown={(e) => {
-                                            if (e.key === 'Enter' && e.ctrlKey) {
-                                                handleSubmitComment();
-                                            }
-                                        }}
-                                    />
-                                    <button 
-                                        className="comment-submit"
-                                        onClick={handleSubmitComment}
-                                        disabled={!commentText.trim() || isGenerating}
-                                    >
-                                        {isGenerating ? 'Generating...' : 'Add to Story'}
-                                    </button>
-                                </div>
                             </div>
 
                             <div className="action-buttons">
@@ -869,7 +755,6 @@ Generate the next page of the story.`
             );
         }
 
-        const [commentText, setCommentText] = useState('');
         ReactDOM.render(<App />, document.getElementById('root'));
     </script>
 <script defer src="https://static.cloudflareinsights.com/beacon.min.js/v8c78df7c7c0f484497ecbca7046644da1771523124516" integrity="sha512-8DS7rgIrAmghBFwoOTujcf6D9rXvH8xm8JQ1Ja01h9QX8EzXldiszufYa4IFfKdLUKTTrnSFXLDkUEOTrZQ8Qg==" data-cf-beacon='{"version":"2024.11.0","token":"4c6229722a6346bc8eb5cb0e5eae5d41","server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
