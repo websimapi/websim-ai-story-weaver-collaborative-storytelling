@@ -1,0 +1,837 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Story Weaver - Collaborative Storytelling</title>
+    <script src="https://cdn.jsdelivr.net/npm/react@18/umd/react.development.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@babel/standalone/babel.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .app-container {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            color: white;
+            font-size: 1.8rem;
+            font-weight: 700;
+        }
+
+        .user-count {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 25px;
+            font-size: 0.9rem;
+        }
+
+        .main-content {
+            flex: 1;
+            display: flex;
+            max-width: 1400px;
+            margin: 0 auto;
+            width: 100%;
+            gap: 2rem;
+            padding: 2rem;
+        }
+
+        .story-canvas {
+            flex: 2;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .story-header {
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            color: white;
+            padding: 1.5rem;
+            text-align: center;
+        }
+
+        .story-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .story-subtitle {
+            opacity: 0.9;
+            font-size: 0.9rem;
+        }
+
+        .page-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        .page-content {
+            flex: 1;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .page-illustration {
+            width: 100%;
+            height: 300px;
+            border-radius: 12px;
+            object-fit: cover;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        .page-text {
+            font-size: 1.1rem;
+            line-height: 1.6;
+            color: #444;
+        }
+
+        .page-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 2rem 1rem;
+            border-top: 1px solid #eee;
+            font-size: 0.85rem;
+            color: #666;
+        }
+
+        .page-navigation {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            padding: 1rem;
+            background: #f8f9fa;
+        }
+
+        .nav-button {
+            padding: 0.8rem 1.5rem;
+            border: none;
+            border-radius: 25px;
+            background: #667eea;
+            color: white;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .nav-button:hover:not(:disabled) {
+            background: #5a67d8;
+            transform: translateY(-2px);
+        }
+
+        .nav-button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .page-counter {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: #666;
+        }
+
+        .collaboration-panel {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .panel-header {
+            background: #f8f9fa;
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid #eee;
+            border-radius: 20px 20px 0 0;
+        }
+
+        .panel-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .comments-section {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .comments-list {
+            flex: 1;
+            padding: 1rem;
+            overflow-y: auto;
+            max-height: 400px;
+        }
+
+        .comment {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 1rem;
+            margin-bottom: 0.8rem;
+            border-left: 4px solid #667eea;
+        }
+
+        .comment-author {
+            font-weight: 600;
+            color: #667eea;
+            font-size: 0.9rem;
+            margin-bottom: 0.3rem;
+        }
+
+        .comment-text {
+            color: #333;
+            line-height: 1.4;
+        }
+
+        .comment-time {
+            font-size: 0.8rem;
+            color: #666;
+            margin-top: 0.5rem;
+        }
+
+        .comment-input-section {
+            padding: 1rem;
+            border-top: 1px solid #eee;
+        }
+
+        .comment-input {
+            width: 100%;
+            padding: 0.8rem;
+            border: 2px solid #eee;
+            border-radius: 8px;
+            resize: vertical;
+            min-height: 80px;
+            font-family: inherit;
+            transition: border-color 0.3s ease;
+        }
+
+        .comment-input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .comment-submit {
+            width: 100%;
+            padding: 0.8rem;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            margin-top: 0.5rem;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background 0.3s ease;
+        }
+
+        .comment-submit:hover {
+            background: #5a67d8;
+        }
+
+        .action-buttons {
+            padding: 1rem;
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .finish-button {
+            flex: 1;
+            padding: 1rem;
+            background: #48bb78;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background 0.3s ease;
+        }
+
+        .finish-button:hover {
+            background: #38a169;
+        }
+
+        .gallery-button {
+            flex: 1;
+            padding: 1rem;
+            background: #ed8936;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background 0.3s ease;
+        }
+
+        .gallery-button:hover {
+            background: #dd6b20;
+        }
+
+        .loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+        }
+
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .empty-state {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 2rem;
+            color: #666;
+        }
+
+        .empty-state h3 {
+            margin-bottom: 1rem;
+            color: #333;
+        }
+
+        .gallery-view {
+            padding: 2rem;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+
+        .gallery-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .story-card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+
+        .story-card:hover {
+            transform: translateY(-4px);
+        }
+
+        .story-card-image {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+        }
+
+        .story-card-content {
+            padding: 1rem;
+        }
+
+        .story-card-title {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .story-card-meta {
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                flex-direction: column;
+                padding: 1rem;
+                gap: 1rem;
+            }
+            
+            .header {
+                padding: 1rem;
+            }
+            
+            .header h1 {
+                font-size: 1.4rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef, useMemo } = React;
+
+        // Initialize WebsimSocket
+        const room = new WebsimSocket();
+
+        function App() {
+            const [currentUser, setCurrentUser] = useState(null);
+            const [isInitialized, setIsInitialized] = useState(false);
+            const [currentView, setCurrentView] = useState('story'); // 'story' or 'gallery'
+            const [currentStoryId, setCurrentStoryId] = useState(null);
+            const [currentPageIndex, setCurrentPageIndex] = useState(0);
+            const [isGenerating, setIsGenerating] = useState(false);
+            const [commentText, setCommentText] = useState('');
+
+            // Real-time data
+            const peers = React.useSyncExternalStore(
+                room.subscribePresence,
+                () => room.peers || {}
+            );
+
+            const storyPages = React.useSyncExternalStore(
+                room.collection('story_page').subscribe,
+                room.collection('story_page').getList
+            );
+
+            const comments = React.useSyncExternalStore(
+                room.collection('story_comment').subscribe,
+                room.collection('story_comment').getList
+            );
+
+            const stories = React.useSyncExternalStore(
+                room.collection('story').subscribe,
+                room.collection('story').getList
+            );
+
+            useEffect(() => {
+                async function initialize() {
+                    await room.initialize();
+                    const user = await window.websim.getCurrentUser();
+                    setCurrentUser(user);
+                    setIsInitialized(true);
+
+                    // Set initial story session
+                    const sessionId = 'current-session';
+                    setCurrentStoryId(sessionId);
+                }
+                initialize();
+            }, []);
+
+            const currentPages = useMemo(() => {
+                if (!currentStoryId) return [];
+                return storyPages
+                    .filter(page => page.story_id === currentStoryId)
+                    .sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+            }, [storyPages, currentStoryId]);
+
+            const currentComments = useMemo(() => {
+                if (!currentStoryId) return [];
+                return comments
+                    .filter(comment => comment.story_id === currentStoryId)
+                    .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+            }, [comments, currentStoryId]);
+
+            const handleSubmitComment = async () => {
+                if (!commentText.trim() || !currentUser) return;
+
+                try {
+                    const comment = await room.collection('story_comment').create({
+                        story_id: currentStoryId,
+                        text: commentText,
+                        author: currentUser.username
+                    });
+
+                    setCommentText('');
+                    
+                    // Trigger AI story generation
+                    await generateStoryPage(comment);
+                } catch (error) {
+                    console.error('Error submitting comment:', error);
+                }
+            };
+
+            const generateStoryPage = async (triggerComment) => {
+                if (isGenerating) return;
+                
+                setIsGenerating(true);
+                
+                try {
+                    // Check if page already exists for this comment
+                    const existingPage = currentPages.find(page => 
+                        page.trigger_comment_id === triggerComment.id
+                    );
+                    
+                    if (existingPage) {
+                        setIsGenerating(false);
+                        return;
+                    }
+
+                    // Prepare story context
+                    const storyContext = currentPages.map(page => ({
+                        text: page.text,
+                        illustration_prompt: page.illustration_prompt
+                    }));
+
+                    const recentComments = currentComments.slice(0, 5).map(c => ({
+                        author: c.author,
+                        text: c.text
+                    }));
+
+                    // Generate story content with AI
+                    const completion = await websim.chat.completions.create({
+                        messages: [
+                            {
+                                role: "system",
+                                content: `You are a creative storyteller. Generate the next page of a collaborative story based on the user comment and existing story context. 
+
+Respond with JSON in this exact format:
+{
+  "text": "The story text for this page (2-3 sentences)",
+  "illustration_prompt": "A detailed prompt for generating an illustration (describe the scene, mood, style)"
+}
+
+Keep the story engaging, family-friendly, and building naturally from the previous pages and the user's comment.`
+                            },
+                            {
+                                role: "user",
+                                content: `Story context so far: ${JSON.stringify(storyContext)}
+Recent comments: ${JSON.stringify(recentComments)}
+New comment triggering this page: "${triggerComment.text}" by ${triggerComment.author}
+
+Generate the next page of the story.`
+                            }
+                        ],
+                        json: true
+                    });
+
+                    const storyData = JSON.parse(completion.content);
+
+                    // Generate illustration
+                    const imageResult = await websim.imageGen({
+                        prompt: storyData.illustration_prompt,
+                        aspect_ratio: "16:9"
+                    });
+
+                    // Create the story page
+                    await room.collection('story_page').create({
+                        story_id: currentStoryId,
+                        text: storyData.text,
+                        illustration_url: imageResult.url,
+                        illustration_prompt: storyData.illustration_prompt,
+                        trigger_comment_id: triggerComment.id,
+                        trigger_comment_text: triggerComment.text,
+                        trigger_comment_author: triggerComment.author,
+                        page_number: currentPages.length + 1
+                    });
+
+                } catch (error) {
+                    console.error('Error generating story page:', error);
+                } finally {
+                    setIsGenerating(false);
+                }
+            };
+
+            const handleFinishStory = async () => {
+                if (currentPages.length === 0) return;
+
+                try {
+                    // Create final story record
+                    const storyTitle = `Collaborative Story - ${new Date().toLocaleDateString()}`;
+                    
+                    await room.collection('story').create({
+                        title: storyTitle,
+                        session_id: currentStoryId,
+                        page_count: currentPages.length,
+                        collaborators: Object.values(peers).map(p => p.username).filter(Boolean),
+                        first_page_image: currentPages[0]?.illustration_url,
+                        completed: true
+                    });
+
+                    // Start new session
+                    const newSessionId = `session-${Date.now()}`;
+                    setCurrentStoryId(newSessionId);
+                    setCurrentPageIndex(0);
+                    
+                    alert('Story completed and saved! Starting a new collaborative session.');
+                } catch (error) {
+                    console.error('Error finishing story:', error);
+                }
+            };
+
+            const navigatePage = (direction) => {
+                const newIndex = currentPageIndex + direction;
+                if (newIndex >= 0 && newIndex < currentPages.length) {
+                    setCurrentPageIndex(newIndex);
+                }
+            };
+
+            const currentPage = currentPages[currentPageIndex];
+
+            if (!isInitialized) {
+                return (
+                    <div className="app-container">
+                        <div className="loading-overlay">
+                            <div className="loading-spinner"></div>
+                        </div>
+                    </div>
+                );
+            }
+
+            if (currentView === 'gallery') {
+                return <GalleryView 
+                    stories={stories.filter(s => s.completed)} 
+                    onBack={() => setCurrentView('story')}
+                    onSelectStory={(story) => {
+                        setCurrentStoryId(story.session_id);
+                        setCurrentView('story');
+                        setCurrentPageIndex(0);
+                    }}
+                />;
+            }
+
+            return (
+                <div className="app-container">
+                    <header className="header">
+                        <h1>AI Story Weaver</h1>
+                        <div className="user-count">
+                            {Object.keys(peers).length} storyteller{Object.keys(peers).length !== 1 ? 's' : ''} online
+                        </div>
+                    </header>
+
+                    <main className="main-content">
+                        <div className="story-canvas">
+                            <div className="story-header">
+                                <div className="story-title">Collaborative Story</div>
+                                <div className="story-subtitle">
+                                    Add comments to guide the AI in weaving your shared tale
+                                </div>
+                            </div>
+
+                            <div className="page-container">
+                                {isGenerating && (
+                                    <div className="loading-overlay">
+                                        <div className="loading-spinner"></div>
+                                    </div>
+                                )}
+
+                                {currentPage ? (
+                                    <div className="page-content">
+                                        <img 
+                                            src={currentPage.illustration_url} 
+                                            alt="Story illustration"
+                                            className="page-illustration"
+                                        />
+                                        <div className="page-text">{currentPage.text}</div>
+                                    </div>
+                                ) : (
+                                    <div className="empty-state">
+                                        <h3>Your Story Awaits</h3>
+                                        <p>Add the first comment to begin your collaborative adventure!</p>
+                                    </div>
+                                )}
+
+                                {currentPage && (
+                                    <div className="page-meta">
+                                        <div>
+                                            Inspired by <strong>{currentPage.trigger_comment_author}</strong>: 
+                                            "{currentPage.trigger_comment_text}"
+                                        </div>
+                                        <div>{new Date(currentPage.created_at).toLocaleTimeString()}</div>
+                                    </div>
+                                )}
+                            </div>
+
+                            {currentPages.length > 0 && (
+                                <div className="page-navigation">
+                                    <button 
+                                        className="nav-button"
+                                        onClick={() => navigatePage(-1)}
+                                        disabled={currentPageIndex === 0}
+                                    >
+                                        Previous
+                                    </button>
+                                    <div className="page-counter">
+                                        Page {currentPageIndex + 1} of {currentPages.length}
+                                    </div>
+                                    <button 
+                                        className="nav-button"
+                                        onClick={() => navigatePage(1)}
+                                        disabled={currentPageIndex === currentPages.length - 1}
+                                    >
+                                        Next
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="collaboration-panel">
+                            <div className="panel-header">
+                                <div className="panel-title">Story Comments</div>
+                            </div>
+
+                            <div className="comments-section">
+                                <div className="comments-list">
+                                    {currentComments.map(comment => (
+                                        <div key={comment.id} className="comment">
+                                            <div className="comment-author">@{comment.author}</div>
+                                            <div className="comment-text">{comment.text}</div>
+                                            <div className="comment-time">
+                                                {new Date(comment.created_at).toLocaleTimeString()}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+
+                                <div className="comment-input-section">
+                                    <textarea
+                                        className="comment-input"
+                                        placeholder="Add your creative input to guide the story..."
+                                        value={commentText}
+                                        onChange={(e) => setCommentText(e.target.value)}
+                                        onKeyDown={(e) => {
+                                            if (e.key === 'Enter' && e.ctrlKey) {
+                                                handleSubmitComment();
+                                            }
+                                        }}
+                                    />
+                                    <button 
+                                        className="comment-submit"
+                                        onClick={handleSubmitComment}
+                                        disabled={!commentText.trim() || isGenerating}
+                                    >
+                                        {isGenerating ? 'Generating...' : 'Add to Story'}
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div className="action-buttons">
+                                <button 
+                                    className="finish-button"
+                                    onClick={handleFinishStory}
+                                    disabled={currentPages.length === 0}
+                                >
+                                    Finish Story
+                                </button>
+                                <button 
+                                    className="gallery-button"
+                                    onClick={() => setCurrentView('gallery')}
+                                >
+                                    Story Gallery
+                                </button>
+                            </div>
+                        </div>
+                    </main>
+                </div>
+            );
+        }
+
+        function GalleryView({ stories, onBack, onSelectStory }) {
+            return (
+                <div className="app-container">
+                    <header className="header">
+                        <h1>Story Gallery</h1>
+                        <button className="nav-button" onClick={onBack}>
+                            Back to Story
+                        </button>
+                    </header>
+
+                    <main className="main-content">
+                        <div className="gallery-view">
+                            <div className="gallery-header">
+                                <h2>Completed Stories</h2>
+                                <p>{stories.length} collaborative tales</p>
+                            </div>
+
+                            {stories.length === 0 ? (
+                                <div className="empty-state">
+                                    <h3>No Stories Yet</h3>
+                                    <p>Complete your first collaborative story to see it here!</p>
+                                </div>
+                            ) : (
+                                <div className="gallery-grid">
+                                    {stories.map(story => (
+                                        <div 
+                                            key={story.id} 
+                                            className="story-card"
+                                            onClick={() => onSelectStory(story)}
+                                        >
+                                            {story.first_page_image && (
+                                                <img 
+                                                    src={story.first_page_image} 
+                                                    alt={story.title}
+                                                    className="story-card-image"
+                                                />
+                                            )}
+                                            <div className="story-card-content">
+                                                <div className="story-card-title">{story.title}</div>
+                                                <div className="story-card-meta">
+                                                    {story.page_count} pages • {story.collaborators?.join(', ') || 'Anonymous'}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    </main>
+                </div>
+            );
+        }
+
+        ReactDOM.render(<App />, document.getElementById('root'));
+    </script>
+<script defer src="https://static.cloudflareinsights.com/beacon.min.js/v8c78df7c7c0f484497ecbca7046644da1771523124516" integrity="sha512-8DS7rgIrAmghBFwoOTujcf6D9rXvH8xm8JQ1Ja01h9QX8EzXldiszufYa4IFfKdLUKTTrnSFXLDkUEOTrZQ8Qg==" data-cf-beacon='{"version":"2024.11.0","token":"4c6229722a6346bc8eb5cb0e5eae5d41","server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
+</body>
+</html>
+
