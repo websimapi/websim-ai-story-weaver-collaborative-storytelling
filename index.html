@@ -433,37 +433,77 @@
             const [isGenerating, setIsGenerating] = useState(false);
             const [commentText, setCommentText] = useState('');
 
-            // Real-time data
+            // Real-time data with proper null checks
             const peers = React.useSyncExternalStore(
-                room.subscribePresence || (() => () => {}),
+                (callback) => {
+                    if (room.subscribePresence && typeof room.subscribePresence === 'function') {
+                        return room.subscribePresence(callback);
+                    }
+                    return () => {};
+                },
                 () => room.peers || {}
             );
 
             const storyPages = React.useSyncExternalStore(
-                room.collection ? room.collection('story_page').subscribe : (() => () => {}),
-                room.collection ? room.collection('story_page').getList : (() => [])
+                (callback) => {
+                    if (room.collection && typeof room.collection === 'function') {
+                        return room.collection('story_page').subscribe(callback);
+                    }
+                    return () => {};
+                },
+                () => {
+                    if (room.collection && typeof room.collection === 'function') {
+                        return room.collection('story_page').getList();
+                    }
+                    return [];
+                }
             );
 
             const comments = React.useSyncExternalStore(
-                room.collection ? room.collection('story_comment').subscribe : (() => () => {}),
-                room.collection ? room.collection('story_comment').getList : (() => [])
+                (callback) => {
+                    if (room.collection && typeof room.collection === 'function') {
+                        return room.collection('story_comment').subscribe(callback);
+                    }
+                    return () => {};
+                },
+                () => {
+                    if (room.collection && typeof room.collection === 'function') {
+                        return room.collection('story_comment').getList();
+                    }
+                    return [];
+                }
             );
 
             const stories = React.useSyncExternalStore(
-                room.collection ? room.collection('story').subscribe : (() => () => {}),
-                room.collection ? room.collection('story').getList : (() => [])
+                (callback) => {
+                    if (room.collection && typeof room.collection === 'function') {
+                        return room.collection('story').subscribe(callback);
+                    }
+                    return () => {};
+                },
+                () => {
+                    if (room.collection && typeof room.collection === 'function') {
+                        return room.collection('story').getList();
+                    }
+                    return [];
+                }
             );
 
             useEffect(() => {
                 async function initialize() {
-                    await room.initialize();
-                    const user = await window.websim.getCurrentUser();
-                    setCurrentUser(user);
-                    setIsInitialized(true);
+                    try {
+                        await room.initialize();
+                        const user = await window.websim.getCurrentUser();
+                        setCurrentUser(user);
+                        setIsInitialized(true);
 
-                    // Set initial story session
-                    const sessionId = 'current-session';
-                    setCurrentStoryId(sessionId);
+                        // Set initial story session
+                        const sessionId = 'current-session';
+                        setCurrentStoryId(sessionId);
+                    } catch (error) {
+                        console.error('Initialization error:', error);
+                        setIsInitialized(true); // Still allow the app to work
+                    }
                 }
                 initialize();
             }, []);
